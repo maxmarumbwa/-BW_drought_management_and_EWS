@@ -1,0 +1,44 @@
+// Farai Maxwell Marumbwa
+// maxmarumbwa@gmail.com
+// 2024/08/29
+var wellfields = ee.FeatureCollection("projects/ee-maxmarumbwa/assets/bw_WellfiedsResources");
+var bw_catchments = ee.FeatureCollection("users/maxmarumbwa/Botswana_catchments");
+var subcatchment = ee.FeatureCollection("projects/ee-maxmarumbwa/assets/WEAP_catchments_20240816");
+var filter = ee.Filter.inList('NAME', ['Upper Limpopo', 'Lower Limpopo']);
+var catchment_filter = bw_catchments.filter(filter);
+//Map.addLayer(catchment_filter, {color: 'green'}, 'Subset');	
+
+var dataset = ee.ImageCollection('NASA/GRACE/MASS_GRIDS/LAND')
+var grwater = dataset.select('lwe_thickness_csr');
+var grwater_ensemble = dataset.select('lwe_thickness_csr','lwe_thickness_gfz', 'lwe_thickness_jpl');
+var year = 2013
+var startDate = ee.Date.fromYMD(year, 1, 1)
+var endDate = startDate.advance(1, 'year')
+var filtered = grwater
+  .filter(ee.Filter.date(startDate, endDate))
+var filtered_ensemble = grwater
+  .filter(ee.Filter.date(startDate, endDate))
+  
+var grwater_mean = filtered.reduce(ee.Reducer.mean())
+var grwater_ensemble_mean = filtered_ensemble.reduce(ee.Reducer.mean())
+
+var grwaterVis = {
+  min: -20,
+  max: 20,
+ //only works if one layer above is selected or stats (ie one band)
+ palette: ['#d73027','#fc8d59','#fee08b','#d9ef8b','#91cf60','#1a9850'],
+};
+Map.setCenter(26, -23, 5);
+Map.addLayer(grwater_mean.clip(subcatchment), grwaterVis,'Groundwater Anomaly');
+Map.addLayer(grwater_ensemble_mean.clip(subcatchment), grwaterVis,'Groundwater Anomaly Ensemble');
+
+
+//Export the image
+Export.image.toDrive({
+  image: grwater_mean.clip(subcatchment),
+  description: 'Annual_ground_water_anomaly',
+  folder:'Botswana_drought_monitoring',
+  fileNamePrefix:'groundwater_anomaly_2014',
+  maxPixels: 8693234915125,
+  scale: 44400,
+});
