@@ -1,3 +1,4 @@
+// Extract GRACE groundwater anomalies for single year
 // Farai Maxwell Marumbwa
 // maxmarumbwa@gmail.com
 // 2024/08/29
