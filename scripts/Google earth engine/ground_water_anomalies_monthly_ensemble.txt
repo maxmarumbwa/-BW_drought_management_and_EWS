@@ -1,0 +1,66 @@
+// Farai Maxwell Marumbwa
+// maxmarumbwa@gmail.com
+// 2024/08/29
+// Calculate monthly groundwater anomaly ensembles for Botswana (2003-2017)
+
+var aoi = ee.FeatureCollection("projects/ee-maxmarumbwa/assets/Bounding_box_botswana_catchments");
+var dataset = ee.ImageCollection('NASA/GRACE/MASS_GRIDS/LAND');
+
+// Select the ensemble layers (CSR, GFZ, JPL)
+var grwater_ensemble = dataset.select('lwe_thickness_csr', 'lwe_thickness_gfz', 'lwe_thickness_jpl');
+
+// Define the time range for analysis
+var startYear = 2003;
+var endYear = 2005;
+var scale = 44400;  // Resolution in meters
+
+// Create an empty list to hold the monthly ensembles as bands
+var monthlyBands = [];
+
+// Loop through each year and month
+for (var year = startYear; year <= endYear; year++) {
+  for (var month = 1; month <= 12; month++) {
+    // Define the start and end date for the current month
+    var startDate = ee.Date.fromYMD(year, month, 1);
+    var endDate = startDate.advance(1, 'month');
+    
+    // Filter the ensemble for the specific month
+    var filtered_ensemble = grwater_ensemble.filter(ee.Filter.date(startDate, endDate));
+    
+    // Calculate the mean ensemble for the month
+    var grwater_ensemble_mean = filtered_ensemble.reduce(ee.Reducer.mean());
+    
+    // Rename the band to include year and month for easier identification
+    var bandName = 'Grwater_anomaly_GRACE' + year + '_' + (month < 10 ? '0' + month : month);
+    grwater_ensemble_mean = grwater_ensemble_mean.rename(bandName);
+    
+    // Add the band to the list (clip to the AOI to reduce data size)
+    monthlyBands.push(grwater_ensemble_mean.clip(aoi));
+  }
+}
+
+// Combine all monthly bands into a single multi-band image
+var multiBandImage = ee.ImageCollection(monthlyBands).toBands();
+
+// Export the multi-band image as GeoTIFF
+Export.image.toDrive({
+  image: multiBandImage,
+  description: 'Monthly_Groundwater_Anomaly_2003_2017',
+  folder: 'Botswana_drought_monitoring',
+  fileNamePrefix: 'groundwater_anomaly_ensemble_2003_2017',
+  scale: scale,
+  region: aoi.geometry(),
+  maxPixels: 1e13,  // Set a high limit for the number of pixels
+  crs: 'EPSG:4326'  // Optional: set the coordinate reference system
+});
+
+// Visualization parameters (optional, for inspecting the final image)
+var grwaterVis = {
+  min: -20,
+  max: 20,
+  palette: ['#d73027','#fc8d59','#fee08b','#d9ef8b','#91cf60','#1a9850'],
+};
+
+// Add the last monthly ensemble to the map for visualization
+Map.setCenter(26, -23, 5);
+Map.addLayer(multiBandImage.select(0), grwaterVis, 'Groundwater Anomaly Ensemble');
