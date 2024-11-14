@@ -6,6 +6,10 @@ library(terra)
 file_path <- "C:/data/rfe_chirp_anom_per_2015.tif"
 raster_data <- rast(file_path)
 
+# Display the names of each band
+band_names <- names(raster_data)
+print(band_names)
+
 # Plot each band separately
 n_bands <- nlyr(raster_data)
 for (i in 1:n_bands) {
@@ -15,39 +19,21 @@ for (i in 1:n_bands) {
 
 # Export to individual file names
 
-# Load the necessary library
-if (!require(terra)) install.packages("terra")
-library(terra)
+# Retrieve band names
+band_names <- names(raster_data)
 
-# Load the multiband GeoTIFF
-file_path <- "C:/data/rfe_chirp_anom_per_2015.tif"
-raster_data <- rast(file_path)
-
-# Get the base file name (without extension)
-base_name <- tools::file_path_sans_ext(basename(file_path))
-
-# Check the number of bands
-n_bands <- nlyr(raster_data)
-
-# Extract and save each band with the original file name as a prefix
-for (i in 1:n_bands) {
+# Export each band using its original band name
+for (i in 1:length(band_names)) {
   # Extract the i-th band
   band <- raster_data[[i]]
   
-  # Define output file path
-  output_path <- paste0("C:/data/", base_name, "_0", i, ".tif")
+  # Define output file path using the band name
+  output_path <- paste0("C:/data/", band_names[i], ".tif")
   
   # Save the band as a separate GeoTIFF file
   writeRaster(band, output_path, overwrite = TRUE)
-  cat("Saved band", i, "to", output_path, "\n")
+  cat("Saved", band_names[i], "to", output_path, "\n")
 }
-
-
-
-
-
-
-
 
 
 
