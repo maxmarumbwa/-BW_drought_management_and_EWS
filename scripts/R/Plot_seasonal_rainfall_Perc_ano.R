@@ -32,15 +32,33 @@ names(Rfe_Perc_ano_stack) <- sapply(names(Rfe_Perc_ano_stack), function(layer_na
   # Return the new name for the layer
   return(new_date_part)
 })
-#plot all years
-plot(Rfe_Perc_ano_stack)
 
-# Plot the raster layer
-plot_layer <- Rfe_Perc_ano_stack[[1]]
 
-# Plot the raster layer with the shapefile overlay
-levelplot(plot_layer, 
-          margin = FALSE,
-          main = "Rainfall Anomaly with Catchment Boundaries") +
-  layer(sp.polygons(catchment_shp_sp, col = "black", lwd = 1.5))
+# Plot using same legend
+# Define a color palette and breaks for the legend
+#color_palette <- colorRampPalette(c("red", "white", "blue"))
+color_palette <- colorRampPalette(c('#d73027','#fc8d59','#fee08b','#ffffbf','#d9ef8b','#91cf60','#1a9850'))
+
+breaks <- seq(-300, 300, by = 10)  # Adjust range based on your data
+
+
+# Plot with overlay and reduced title size
+levelplot(
+  Rfe_Perc_ano_stack,
+  main = list(label = "Rainfall Anomaly (%) for 2015-2016 Season", cex = 0.8),  # Reduce title size
+  col.regions = color_palette,
+  at = breaks,
+  names.attr = names(Rfe_Perc_ano_stack),  # Use the modified layer names as titles
+  par.settings = list(strip.background = list(col = "lightgrey")),
+  layout = c(1, 1),  # Adjust for desired layout
+  panel = function(...) {
+    panel.levelplot(...)  # Plot raster
+    sp::sp.polygons(catchment_shp_sp, col = "black", lwd = 1.5)  # Overlay shapefile boundaries
+    
+    # Add catchment names
+    catchment_coords <- coordinates(catchment_shp_sp)  # Get coordinates for labels
+    catchment_names <- catchment_shp_sp@data$name      # Access "name" attribute in shapefile
+    panel.text(catchment_coords[,1], catchment_coords[,2], labels = catchment_names, cex = 0.6, col = "black")
+  }
+)
 
