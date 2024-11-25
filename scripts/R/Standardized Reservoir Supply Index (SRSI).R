@@ -2,7 +2,8 @@ rm(list = ls())
 library(readxl)
 library(dplyr)
 library(lubridate)
-
+library(tidyr)
+library(ggplot2)
 
 #load the input files
 infile <- read_excel("data/input/WEAP/input/Model_damvolumes/Dam_volumes.xlsx", sheet = 'Dam_volume (Cubic meter)')
@@ -19,57 +20,68 @@ infile_long
 
 # Convert daily data to monthly mean
 monthly_reservoir_data <- infile_long %>%
-  mutate(Month = floor_date(Date, "month")) %>%  # Extract month
-  group_by(Month, dam_type) %>%                 # Group by month and dam type
-  summarise(Storage = mean(storage), .groups = "drop")  # Calculate mean
+  mutate(year_month = floor_date(Date, "month")) %>%  # Extract month
+  group_by(year_month, Dam) %>%                 # Group by month and dam type
+  summarise(storage = mean(Storage), .groups = "drop")  # Calculate mean
 
-# Convert daily data to monthly totals
-monthly_resevoir_data <- infile_long %>%
-  group_by(Dam) %>%
-  mutate(year_month = format(Date, "%Y-%m")) %>%
-  group_by(year_month) %>%
-  summarise(Storage = sum(Storage))
-monthly_resevoir_data
 
 # Calculate SRSI
-srsic<- infile_long %>%
+SRSI<- monthly_reservoir_data %>%
   group_by(Dam) %>%
   mutate(
-    mean_value = mean(value, na.rm = TRUE),
-    sd_value = sd(value, na.rm = TRUE),
-    SRSI = (value - mean_value) / sd_value
+    mean_storage = mean(storage, na.rm = TRUE),
+    sd_storage = sd(storage, na.rm = TRUE),
+    SRSI = (storage - mean_storage) / sd_storage
   )
-
-# View results
-print(srsic)
+SRSI
 
 
+# # Plot SRSI for 1 dam
+# gaborone_data <- SRSI %>% filter(Dam == "Gaborone_dam")
+# 
+# # Plot SRSI over time for Gaborone_dam
+# ggplot(gaborone_data, aes(x = year_month, y = SRSI)) +
+#   geom_line(color = "blue", size = 1) +
+#   #geom_point(color = "red", size = 2) +
+#   labs(
+#     title = "Standardised Reservoir Supply index for Gaborone Dam",
+#     x = "a",
+#     y = "SRSI"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+#     axis.text = element_text(size = 10),
+#     axis.title = element_text(size = 12)
+#   )
+# 
+# 
 
-
-
-
-library(dplyr)
-
-# Sample long-format data
-df_long <- data.frame(
-  Date = as.Date(rep(seq(as.Date("2011-01-01"), by = "days", length.out = 5), 4)),
-  dam_type = rep(c("_dam", "hog_dam", "ne_dam", "go_dam"), each = 5),
-  value = c(
-    18270264, 18500000, 18500000, 18436614, 18500000,
-    394279296, 397609824, 399451424, 399368736, 400000000,
-    57041584, 57007356, 57653476, 57661516, 58125388,
-    108736024, 108812304, 109315200, 109145720, 109141968
-  )
+# SPI Classification thresholds
+SRSI_levels <- data.frame(
+  Category = c("Extreme Drought", "Severe Drought", "Moderate Drought", 
+               "Near Normal", "Moderately Wet", "Very Wet", "Extremely Wet"),
+  Threshold = c(-2, -1.5, -1, 0, 1, 1.5, 2)
 )
 
-# Calculate SRSI
-srsi <- df_long %>%
-  group_by(dam_type) %>%
-  mutate(
-    mean_value = mean(value, na.rm = TRUE),
-    sd_value = sd(value, na.rm = TRUE),
-    SRSI = (value - mean_value) / sd_value
+# Plot the bar graph
+ggplot(gaborone_data, aes(x = year_month, y = SRSI)) +
+  geom_bar(stat = "identity", fill = "skyblue", alpha = 0.8) +  # Bar graph
+  geom_hline(data = SRSI_levels, aes(yintercept = Threshold, color = Category), 
+             linetype = "dashed", size = 0.7) +  # SRSI Classification Lines
+  scale_color_manual(
+    values = c("red", "blue", "yellow", "green", "lightblue", "brown", "darkblue"),
+    guide = guide_legend(title = "SRSI Classification")
+  ) +
+  labs(
+    title = "SRSI for Gaborone Dam ",
+    x = "Date",
+    y = "SRSI"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 9),
+    legend.position = "right"
   )
-
-# View results
-print(srsi)
