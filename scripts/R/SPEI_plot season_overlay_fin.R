@@ -47,7 +47,7 @@ names(raster_stack_raster) <- layer_names
 #color_palette <- c('#d53e4f','#fc8d59','#fee08b','#f5f5f5','#e6f598','#99d594','#3288bd')
 color_palette <- c('#d53e4f','red','#fc8d59','#fee08b','#f5f5f5','#e6f598','#99d594','#6488bd','#3288bd')
 
-breaks <- c(-4,-2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2,4) 
+breaks <- c(-3,-2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2,3) 
 
 # Plot using levelplot with updated layer names - NO OVERLAY
 levelplot(raster_stack_raster, 
