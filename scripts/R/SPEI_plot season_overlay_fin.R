@@ -9,20 +9,20 @@ library(sf)        # For handling shapefiles
 library(raster)
 
 # Set paths
-input_dir <- here("output", "spei_geotiffs", "spei12")
+input_dir <- here("output", "spei_geotiffs", "spei03")
 shapefile_path <- here("data", "shapefiles", "WEAP_main_catchments_reproj.shp")
 bw_shapefile_path <- "data/shapefiles/Botswana_country.shp"
 
 # Define the period (October 2017 to April 2018)
 start_date <- as.Date("2015-10-01")
-end_date <- as.Date("2015-11-30")
+end_date <- as.Date("2016-05-30")
 
 # Generate a list of expected file names for this period
 dates <- seq(start_date, end_date, by = "month")
-file_names <- paste0("Spei12_csic_", format(dates, "%Y%m"), ".tif")
+file_names <- paste0("Spei03_csic_", format(dates, "%Y%m"), ".tif")
 
 # Extract readable labels from file names
-layer_names <- format(dates, "%B %Y")  # Converts dates to "Month Year" format
+layer_names <- format(dates, "%b %Y")  # Converts dates to "Month Year" format
 
 # Load the GeoTIFF files for the specified period
 file_paths <- file.path(input_dir, file_names)
@@ -49,14 +49,14 @@ color_palette <- c('#d53e4f','red','#fc8d59','#fee08b','#f5f5f5','#e6f598','#99d
 
 breaks <- c(-3,-2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2,3) 
 
-# Plot using levelplot with updated layer names - NO OVERLAY
-levelplot(raster_stack_raster, 
-          col.regions = color_palette, 
-          at = seq(-3, 3, length.out = length(color_palette) + 0.5), # Adjust breaks based on data range
-          main = "12 month SPEI Analysis: October 2017 to April 2018",
-          scales = list(draw = TRUE),  # Ensures axes are drawn
-          colorkey = list(space = "right")) # Place legend on the right
-
+### Plot using levelplot with updated layer names - NO OVERLAY
+# levelplot(raster_stack_raster, 
+#           col.regions = color_palette, 
+#           at = seq(-3, 3, length.out = length(color_palette) + 0.5), # Adjust breaks based on data range
+#           main = list(label = "1 Month SPEI for 2015-2016 Season", cex = 1),
+#           scales = list(draw = TRUE),  # Ensures axes are drawn
+#           colorkey = list(space = "right")) # Place legend on the right
+# 
 
 ########------- Add shapefile and plot the map ----- ####
 # Load shapefiles
@@ -69,7 +69,7 @@ bw_shp_sp <- as(bw_shp, "Spatial")
 
 levelplot(
   raster_stack_raster,
-  main = list(label = "3 Month SPEI for 2015-2016 Season", cex = 0.8),  # Reduce title size
+  main = list(label = "3 Month SPEI for 2015-2016 Season", cex = 1),  # Reduce title size
   col.regions = color_palette,
   at = breaks,
   names.attr = names(raster_stack_raster),  # Use the modified layer names as titles
@@ -89,7 +89,25 @@ levelplot(
 
 
 
+
 ###############################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 rm(list = ls())
 
